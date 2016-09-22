@@ -15,25 +15,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PDFDownloader {
 
-    
-    public static final int NUMBER_OF_DOWNLOADERS = 7;
+    public static final int NUMBER_OF_DOWNLOADERS = 14;
 
     public static void main(String[] args) {
         try {
-            AtomicInteger count=new AtomicInteger(0);
+            AtomicInteger count = new AtomicInteger(0);
+            final long start = System.currentTimeMillis();
             BlockingQueue<String> filesUrlsToDownload = new LinkedBlockingQueue<>();
+            BlockingQueue<String> log = new LinkedBlockingQueue<>();
+            
+            LoggerThread lt = new LoggerThread(log);
+            Thread loggerThread = new Thread(lt);
+            loggerThread.start();
 
-            long start = System.nanoTime();
             Searcher searcher = new Searcher(filesUrlsToDownload);
             Thread searcherThread = new Thread(searcher);
             searcherThread.start();
+            
             CountDownLatch gate = new CountDownLatch(NUMBER_OF_DOWNLOADERS);
-            FileDownloader a = new FileDownloader(filesUrlsToDownload,  gate, count);
+
             for (int i = 0; i < NUMBER_OF_DOWNLOADERS; i++) {
+                FileDownloader a = new FileDownloader(filesUrlsToDownload, gate, count, start, log, i);
                 Thread analyzerThread = new Thread(a);
                 analyzerThread.start();
             }
             gate.await();
+            log.offer("poison.pill");
+
             System.out.println("Running time: " + (System.nanoTime() - start) / 1000000.0 + " ms");
 
         } catch (InterruptedException e) {

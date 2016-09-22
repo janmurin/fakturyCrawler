@@ -18,7 +18,7 @@ public class Searcher implements Runnable {
     }
 
     public void run() {
-        int start = 2255309;
+        int start = 2248603;
         String urlTemplate = "http://cr.iedu.sk/data/att/%d_subor.pdf";
         int count = 0;
 
