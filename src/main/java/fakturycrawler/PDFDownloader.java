@@ -1,4 +1,4 @@
-package com.mycompany.fakturycrawler;
+
 
 import java.io.File;
 import java.util.Comparator;
@@ -28,7 +28,7 @@ public class PDFDownloader {
             Thread loggerThread = new Thread(lt);
             loggerThread.start();
 
-            Searcher searcher = new Searcher(filesUrlsToDownload);
+            Searcher searcher = new Searcher(filesUrlsToDownload, Integer.parseInt(args[0]));
             Thread searcherThread = new Thread(searcher);
             searcherThread.start();
             

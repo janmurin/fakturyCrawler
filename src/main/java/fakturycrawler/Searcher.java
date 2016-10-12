@@ -1,4 +1,4 @@
-package com.mycompany.fakturycrawler;
+
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,14 +11,15 @@ import java.util.Queue;
 public class Searcher implements Runnable {
 
     private Queue<String> queue;
+    private int start;
     public static final String TEMPLATE = "http://cr.iedu.sk/data/att/%d_subor.pdf";
 
-    public Searcher(Queue<String> queue) {
+    public Searcher(Queue<String> queue, int start) {
         this.queue = queue;
+        this.start = start;
     }
 
     public void run() {
-        int start = 2248603;
         String urlTemplate = "http://cr.iedu.sk/data/att/%d_subor.pdf";
         int count = 0;
 
@@ -27,7 +28,7 @@ public class Searcher implements Runnable {
             String url = String.format(urlTemplate, start);
             queue.offer(url);
 
-            start -= 2;
+            this.start -= 2;
         }
     }
 

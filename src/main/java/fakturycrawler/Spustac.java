@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mycompany.fakturycrawler;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,8 +22,7 @@ import java.util.logging.Logger;
  */
 public class Spustac {
 
-    public void execute() {
-        int start = 2255309;
+    public void execute(int start) {        
         String urlTemplate = "http://cr.iedu.sk/data/att/%d_subor.pdf";
         int count=0;
 
@@ -47,10 +46,12 @@ public class Spustac {
 
                 while ((read = inputStream.read(bytes)) != -1) {
                     outputStream.write(bytes, 0, read);
-                }
+                }                
 
                 count++;
-                System.out.println("Done!\n");
+                System.out.println("Downloaded! File id: " + start + "\n");
+//                InvoiceChecker checker = new InvoiceChecker(new Integer(start).toString());
+//                checker.checkInovice();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -77,6 +78,6 @@ public class Spustac {
     }
 
     public static void main(String[] args) {
-        new Spustac().execute();
+        new Spustac().execute(1928049);
     }
 }

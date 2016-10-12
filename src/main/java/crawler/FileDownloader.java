@@ -1,4 +1,4 @@
-package com.mycompany.fakturycrawler;
+package crawler;
 
 import java.io.File;
 import java.io.FileOutputStream;
