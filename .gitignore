@@ -1,3 +1,11 @@
 /downloads/
 /log.txt
 /log.txt.lck
+.project
+.settings/
+.svn/
+target/
+*.classpath
+bin/
+*.iml
+.idea/
