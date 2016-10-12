@@ -1,5 +1,4 @@
 package zmluvy;
-
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -7,7 +6,6 @@ package zmluvy;
  */
 
 
-import fakturycrawler.*;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.FileHandler;
@@ -30,12 +28,13 @@ public class LoggerThread implements Runnable {
         try {
             fh = new FileHandler("log.txt", true);
         } catch (IOException ex) {
-            Logger.getLogger(ZmluvaParser.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(LoggerThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SecurityException ex) {
-            Logger.getLogger(ZmluvaParser.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(LoggerThread.class.getName()).log(Level.SEVERE, null, ex);
         }
         logger.addHandler(fh);
-        SimpleFormatter formatter = new SimpleFormatter();
+        //SimpleFormatter formatter = new SimpleFormatter();
+        SingleLineFormatter formatter=new SingleLineFormatter();
         fh.setFormatter(formatter);
     }
     

@@ -1,7 +1,5 @@
 package zmluvy;
 
-
-
 import static com.sun.org.apache.bcel.internal.util.SecuritySupport.getResourceAsStream;
 import fakturycrawler.*;
 import java.io.File;
@@ -31,49 +29,45 @@ public class ZmluvySearcher implements Runnable {
     private Queue<String> queue;
     private int start;
     public static final String TEMPLATE = "https://www.crz.gov.sk/index.php?ID=2171273&art_zs1=UPJS&page=%d";
-    private JSoup jsoup=new JSoup();
+    private JSoup jsoup = new JSoup();
+    private String weburl = "https://www.crz.gov.sk";
 
     public ZmluvySearcher(Queue<String> queue, int start) {
         this.queue = queue;
         this.start = start;
     }
 
-  @Override
+    @Override
     public void run() {
-       int page=start;
-       
-       while(true){
-           String url = String.format(TEMPLATE, page);
-           
-           try {
-               Document doc = jsoup.getPage(url);
-               
-               Elements linky = doc.select("table.table_list a");
-               
-               for(int i=10; i<linky.size(); i++){
-                   Element el = linky.get(i);
-                   System.out.println(i+". a="+el.attr("href"));
-               }
-               
-               break;
-           } catch (Exception ex) {
-               Logger.getLogger(ZmluvySearcher.class.getName()).log(Level.SEVERE, null, ex);
-               break;
-           }
-           
-       }
+        int page = start;
+        int count = 1;
+
+        while (true) {
+            String url = String.format(TEMPLATE, page);
+            System.out.println("url = " + url);
+            try {
+                Document doc = jsoup.getPage(url);
+
+                Elements linky = doc.select("table.table_list a");
+
+                for (int i = 10; i < linky.size(); i++) {
+                    Element el = linky.get(i);
+                    System.out.println(count + "_" + weburl + el.attr("href"));
+                    count++;
+                }
+
+                page++;
+
+                //break;
+            } catch (Exception ex) {
+                Logger.getLogger(ZmluvySearcher.class.getName()).log(Level.SEVERE, null, ex);
+                break;
+            }
+
+        }
     }
 
     public static void main(String[] args) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, CertificateException {
-             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
-        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-        InputStream keystoreStream = getResourceAsStream("crz.gov.crt");
-        keystore.load(keystoreStream, new char[0]);
-        trustManagerFactory.init(keystore);
-        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-        SSLContext sc = SSLContext.getInstance("SSL");
-        sc.init(null, trustManagers, null);
-        SSLContext.setDefault(sc);
         new ZmluvySearcher(null, 0).run();
     }
 

@@ -1,7 +1,5 @@
 package zmluvy;
 
-
-
 import fakturycrawler.*;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,6 +19,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 public class ZmluvaParser implements Runnable {
 
@@ -31,6 +31,7 @@ public class ZmluvaParser implements Runnable {
     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
     private final BlockingQueue<String> log;
     private final int id;
+    private JSoup jsoup = new JSoup();
 
     ZmluvaParser(BlockingQueue<String> filesUrlsToDownload, CountDownLatch gate, AtomicInteger count, long start, BlockingQueue<String> log, int id) {
         this.gate = gate;
@@ -43,14 +44,15 @@ public class ZmluvaParser implements Runnable {
 
     public void run() {
         try {
-            String file = filesToAnalyze.take();
-            while (file != null) {
-                if (file.equals("poison.pill")) {
+            String url = filesToAnalyze.take();
+            while (url != null) {
+                if (url.equals("poison.pill")) {
                     break;
                 }
-                downloadFile(file);
+                parseZmluva(url);
 
-                file = filesToAnalyze.take();
+                url = filesToAnalyze.take();
+                //return;
             }
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
@@ -60,79 +62,47 @@ public class ZmluvaParser implements Runnable {
         }
     }
 
-    private void downloadFile(String url) {
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
+    private void parseZmluva(String url) {
 
         try {
-            //System.out.println("url -> " + url);
-            log.offer(id + " url -> " + url);
-            inputStream = new URL(url).openStream();
+            Document doc = jsoup.getPage(url);
 
-            String filename = url.substring(url.lastIndexOf("/"));
-            // write the inputStream to a FileOutputStream
-            outputStream = new FileOutputStream(new File("downloads/" + filename));
-
-            int read = 0;
-            byte[] bytes = new byte[1024];
-
-            while ((read = inputStream.read(bytes)) != -1) {
-                outputStream.write(bytes, 0, read);
+            String datum_zverejnenia = doc.select("div.area:nth-child(1) > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2)").text();
+            String datum_uzavretia = doc.select("div.area:nth-child(1) > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2)").text();
+            String datum_ucinnosti = doc.select("div.area:nth-child(1) > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(3) > td:nth-child(2)").text();
+            String datum_platnosti = doc.select("div.area:nth-child(1) > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(4) > td:nth-child(2)").text();
+            String subor_url = doc.select(".nobullet > a:nth-child(2)").attr("href");
+            String typ = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2)").text();
+            String rezort = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2)").text();
+            String objednavatel = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(3) > td:nth-child(2)").html();
+            String ico_objednavatel = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(4) > td:nth-child(2)").text();
+            String dodavatel = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(5) > td:nth-child(2)").html();
+            String tableText = doc.select(".b_right > table:nth-child(2)").text();
+            if (tableText.substring(tableText.indexOf("IČO") + 3).indexOf("IČO") == -1) {
+                String nazov_zmluvy = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(6) > td:nth-child(2)").text();
+                String cislo_zmluvy = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(7) > td:nth-child(2)").text();
+                String crz_id = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(10) > td:nth-child(2)").text();
+                String posledna_zmena = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(11) > td:nth-child(2)").text();
+                String celkova_ciastka = doc.select("div.last > span:nth-child(2)").text();
+                Zmluva zmluva = new Zmluva(datum_platnosti, datum_ucinnosti, datum_uzavretia, datum_zverejnenia, subor_url, typ, rezort, objednavatel, ico_objednavatel, dodavatel, nazov_zmluvy, cislo_zmluvy, crz_id, posledna_zmena, celkova_ciastka, url, "");
+                ZmluvyDownloader.zmluvy.offer(zmluva);
+            } else {
+                String ico_dodavatel = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(6) > td:nth-child(2)").text();
+                String nazov_zmluvy = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(7) > td:nth-child(2)").text();
+                String cislo_zmluvy = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(8) > td:nth-child(2)").text();
+                String crz_id = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(11) > td:nth-child(2)").text();
+                String posledna_zmena = doc.select(".b_right > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(12) > td:nth-child(2)").text();
+                String celkova_ciastka = doc.select("div.last > span:nth-child(2)").text();
+                Zmluva zmluva = new Zmluva(datum_platnosti, datum_ucinnosti, datum_uzavretia, datum_zverejnenia, subor_url, typ, rezort, objednavatel, ico_objednavatel, dodavatel, nazov_zmluvy, cislo_zmluvy, crz_id, posledna_zmena, celkova_ciastka, url, ico_dodavatel);
+                ZmluvyDownloader.zmluvy.offer(zmluva);
             }
 
-            int pocet = count.incrementAndGet();
-            //System.out.println("Done! " + pocet + " elapsed: " + getElapsed() + " suborov za minutu: " + getSuborovMinutu(pocet));
-            log.offer(id + " Done! " + pocet + " elapsed: " + getElapsedTime(start) + " suborov za minutu: " + getSuborovMinutu(pocet));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (outputStream != null) {
-                try {
-                    // outputStream.flush();
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
+            log.offer("parser " + id + " nacital zmluvu cislo " + count.incrementAndGet());
+//System.out.println(z);
+        } catch (Exception ex) {
+            log.offer("bad url: " + url);
+            Logger.getLogger(ZmluvaParser.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private double getSuborovMinutu(int pocet) {
-        double elapsedTime = ((System.currentTimeMillis() - start) / 1000.0);
-        double minut =  ((elapsedTime) / (60));
-
-        return pocet / minut;
-    }
-
-      public static String getElapsedTime(long startTime) {
-        double elapsedTime = ((System.currentTimeMillis() - startTime) / 1000.0);
-        int hodinE = (int) ((elapsedTime) / (3600));
-        int minutE = (int) ((elapsedTime) / (60));
-        int sekundE = (int) ((elapsedTime));
-        sekundE %= 60;
-        minutE %= 60;
-        String hodinStringE = "" + hodinE;
-        if (hodinE < 10) {
-            hodinStringE = "0" + hodinE;
-        }
-        String minutStringE = "" + minutE;
-        if (minutE < 10) {
-            minutStringE = "0" + minutE;
-        }
-        String sekundStringE = "" + sekundE;
-        if (sekundE < 10) {
-            sekundStringE = "0" + sekundE;
-        }
-        //System.out.println("ETA:" + (hodinStringE + ":" + minutStringE + ":" + sekundStringE));
-        return (hodinStringE + ":" + minutStringE + ":" + sekundStringE);
-    }
 }
