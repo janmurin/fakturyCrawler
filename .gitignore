@@ -2,3 +2,6 @@
 /log.txt
 /log.txt.lck
 /target/
+/application.properties
+/unifikatorCrawler.log
+/unifikatorCrawler.log.lck
